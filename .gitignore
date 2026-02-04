@@ -1,0 +1,29 @@
+# Expo
+.expo/
+dist/
+web-build/
+
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Production
+build/
+
+# Misc
+.env
+.DS_Store
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Native
+android/
+ios/
+*.apk
+*.aab
+*.jks
+*.keystore
+*.jsbundle

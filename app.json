@@ -1,0 +1,83 @@
+{
+  "expo": {
+    "name": "AgroGB Mobile",
+    "slug": "agrogb-mobile",
+    "version": "7.0.0",
+    "scheme": "agrogb",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#10B981"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.agrogb.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#10B981"
+      },
+      "package": "com.agrogb.mobile",
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.DETECT_SCREEN_CAPTURE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "dd5b4ea9-8594-4f37-86a3-b5ef94900b23"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/dd5b4ea9-8594-4f37-86a3-b5ef94900b23"
+    },
+    "plugins": [
+      "expo-font",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permitir acesso à câmera para fotos do plano de adubação.",
+          "microphonePermission": "Permitir acesso ao microfone para vídeos."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Permitir salvar relatórios e fotos.",
+          "saveToPhotosPermission": "Permitir salvar arquivos no dispositivo.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "kotlinVersion": "1.8.10",
+            "extraGradleProps": {
+              "org.gradle.jvmargs": "-Xmx6g -XX:MaxMetaspaceSize=1g",
+              "org.gradle.daemon": "false"
+            }
+          }
+        }
+      ]
+    ]
+  }
+}
