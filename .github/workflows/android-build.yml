@@ -29,10 +29,13 @@ jobs:
           java-version: '17'
 
       - name: 📦 Install Dependencies
-        run: npm ci
+        run: |
+          npm cache clean --force
+          npm install
+          npm install expo-modules-core
 
       - name: ⚙️ Expo Prebuild
-        run: npx expo prebuild --platform android
+        run: npx expo prebuild --platform android --clean
 
       - name: 🔑 Setup Release Keystore
         run: |
