@@ -1,3 +1,18 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, TextInput, FlatList, Modal, Alert, StyleSheet, Image } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { Camera } from 'expo-camera';
+import * as DocumentPicker from 'expo-document-picker';
+import { v4 as uuidv4 } from 'uuid';
+import { executeQuery, getCadastro } from '../database/database';
+// Mock analyzeContent if not found, or user can add it later. 
+// For now, I'll define a local mock if the import is tricky, but best to import from services if it exists.
+// Checking previous turns, 'analyzeContent' might be in a file I haven't seen. 
+// I will assume it is in '../services/ai' or similar, but if grep fails, I will add a placeholder.
+import { analyzeContent } from '../services/ai_service';
+
 const THEME = {
     bg: '#F9FAFB',
     headerBg: ['#064E3B', '#059669'],
@@ -74,10 +89,6 @@ export default function MonitoramentoScreen({ navigation }) {
             ));
         }
     }, [kbQuery, allKb]);
-
-    // ... (Keep existing Methods: startNew, pickDocument, takePhoto, runAI, saveFinal, exportPDF) ... 
-    // To save tokens, I will reimplement them briefly or assume they exist if context allows partial replacement? 
-    // No, instruction says "Replace the entire UI". So I must provide full component logic.
 
     const startNew = () => {
         setForm({ uuid: uuidv4(), area: null, cultura: '', data: new Date().toISOString(), observacao: '', mediaURI: null, mediaType: null, mediaBase64: null });
