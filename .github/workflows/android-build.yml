@@ -43,6 +43,7 @@ jobs:
           -dname "CN=AgroGB,O=AgroGB,C=BR"
 
           # 2. Configure gradle.properties for Signing
+          echo "" >> android/gradle.properties
           echo "MYAPP_UPLOAD_STORE_FILE=release.keystore" >> android/gradle.properties
           echo "MYAPP_UPLOAD_KEY_ALIAS=my-key-alias" >> android/gradle.properties
           echo "MYAPP_UPLOAD_STORE_PASSWORD=android" >> android/gradle.properties
