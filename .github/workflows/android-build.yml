@@ -32,7 +32,7 @@ jobs:
         run: npm ci
 
       - name: ⚙️ Expo Prebuild
-        run: npx expo prebuild --platform android --no-interactive
+        run: npx expo prebuild --platform android
 
       - name: 🔑 Setup Release Keystore
         run: |
