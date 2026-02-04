@@ -30,6 +30,8 @@ import AdubacaoListScreen from './src/screens/AdubacaoListScreen';
 import AdubacaoFormScreen from './src/screens/AdubacaoFormScreen';
 import AdubacaoDetailScreen from './src/screens/AdubacaoDetailScreen';
 
+import ErrorBoundary from './src/components/ErrorBoundary';
+
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -38,7 +40,7 @@ export default function App() {
     }, []);
 
     return (
-        <>
+        <ErrorBoundary>
             <StatusBar style="light" />
             <NavigationContainer>
                 <Stack.Navigator
@@ -138,6 +140,6 @@ export default function App() {
 
                 </Stack.Navigator>
             </NavigationContainer>
-        </>
+        </ErrorBoundary>
     );
 }
