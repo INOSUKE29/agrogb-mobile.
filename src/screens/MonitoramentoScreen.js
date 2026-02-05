@@ -11,7 +11,7 @@ import { executeQuery, getCadastro } from '../database/database';
 // For now, I'll define a local mock if the import is tricky, but best to import from services if it exists.
 // Checking previous turns, 'analyzeContent' might be in a file I haven't seen. 
 // I will assume it is in '../services/ai' or similar, but if grep fails, I will add a placeholder.
-import { analyzeContent } from '../services/ai_service';
+import { analyzeContent } from '../services/AIService';
 
 const THEME = {
     bg: '#F9FAFB',
