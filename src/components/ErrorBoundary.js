@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import * as Updates from 'expo-updates';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 export default class ErrorBoundary extends React.Component {
     constructor(props) {
         super(props);
@@ -19,6 +21,8 @@ export default class ErrorBoundary extends React.Component {
 
     handleRestart = async () => {
         try {
+            // CRITICAL FIX: Limpar sessão para evitar loop de erro
+            await AsyncStorage.multiRemove(['@user_session', '@user_profile', '@menu_config']);
             await Updates.reloadAsync();
         } catch (e) {
             Alert.alert("Erro", "Falha ao reiniciar. Feche o app manualmente.");

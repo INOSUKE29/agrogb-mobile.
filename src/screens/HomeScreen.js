@@ -31,8 +31,11 @@ export default function HomeScreen({ navigation }) {
         vendasHoje: 0,
         plantioAtivo: 0,
         maquinasAlert: 0,
+        maquinasAlert: 0,
         pendentes: 0
     });
+    const [drawerVisible, setDrawerVisible] = useState(false);
+
 
     const loadStats = async () => {
         const data = await getDashboardStats();

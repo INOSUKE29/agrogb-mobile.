@@ -4,6 +4,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvo
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Updates from 'expo-updates';
+import * as Linking from 'expo-linking';
 import { getSupabase } from '../services/supabase';
 import { insertUsuario } from '../database/database';
 
@@ -11,7 +12,6 @@ const { height } = Dimensions.get('window');
 
 import { executeQuery } from '../database/database';
 
-import Link from '@react-navigation/native'; // Not needed but keeping structure valid
 import AgroInput from '../components/AgroInput';
 import AgroButton from '../components/AgroButton';
 
@@ -20,23 +20,83 @@ export default function LoginScreen({ navigation }) {
     const [senha, setSenha] = useState('');
     const [loading, setLoading] = useState(false);
 
+
+    // ...
+
+
+    // ...
+
     const handleGoogleLogin = async () => {
         try {
+            setLoading(true);
+            const redirectUrl = Linking.createURL('/login-callback');
             const supabase = getSupabase();
-            // Inicia fluxo OAuth (Vai abrir navegador)
+
             const { data, error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
-                    redirectTo: 'agrogb://login-callback' // Necessário configurar Scheme no app.json
+                    redirectTo: redirectUrl,
+                    skipBrowserRedirect: false // Garante que abre o navegador
                 }
             });
 
-            // Nota: Em fluxo real, o app ouviria o deep link de retorno.
-            // Para este protótipo, alertamos o passo seguinte.
+            if (error) throw error;
+            // O navegador abrirá. O App deve aguardar o retorno via Deep Link.
         } catch (e) {
-            Alert.alert('Erro Google', 'Configuração de Auth necessária no Painel Supabase.');
+            Alert.alert('Erro Google', e.message || 'Falha na inicialização OAuth.');
+            setLoading(false);
         }
     };
+
+    // Ouvinte de Deep Link (Retorno do Google)
+    useEffect(() => {
+        const handleUrl = async ({ url }) => {
+            try {
+                if (url && url.includes('login-callback')) {
+                    setLoading(true);
+                    const supabase = getSupabase();
+
+                    // Supabase v2: A sessão é tratada automaticamente se a URL contiver params corretos
+                    // Mas precisamos garantir que a sessão foi estabelecida.
+                    const { data: { session }, error } = await supabase.auth.getSession();
+
+                    if (session) {
+                        // Persistir sessão local p/ manter compatibilidade com nosso App
+                        const user = session.user;
+                        const sessionData = {
+                            id: user.id,
+                            usuario: user.email,
+                            nome: user.user_metadata?.full_name || user.email,
+                            nivel: 'USER', // Default level
+                            provider: 'google',
+                            timestamp: new Date().getTime()
+                        };
+                        await AsyncStorage.setItem('user_session', JSON.stringify(sessionData));
+                        navigation.replace('Home');
+                    } else if (error) {
+                        throw error;
+                    }
+                }
+            } catch (e) {
+                console.log('DeepLink Error:', e);
+                // Não alertar se for apenas um link qualquer.
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        // Inscrever no evento de URL
+        const sub = Linking.addEventListener('url', handleUrl);
+
+        // Verificar se o app já abriu com a URL (Cold start)
+        Linking.getInitialURL().then((url) => {
+            if (url) handleUrl({ url });
+        });
+
+        return () => {
+            sub.remove();
+        };
+    }, []);
 
     // Verificação Automática de Login
     useEffect(() => {
