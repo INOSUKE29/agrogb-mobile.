@@ -3,9 +3,11 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, Statu
 import { useFocusEffect } from '@react-navigation/native';
 import { executeQuery, getConfig, getDashboardStats } from '../database/database';
 import { syncTable } from '../services/supabase';
+import { MenuConfigService } from '../services/MenuConfigService';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import SidebarDrawer from '../components/SidebarDrawer';
 
 const { width } = Dimensions.get('window');
 
@@ -46,22 +48,27 @@ export default function HomeScreen({ navigation }) {
 
     useFocusEffect(useCallback(() => { loadStats(); autoSync(); }, []));
 
-    const menuItems = [
-        { id: '1', title: 'COLHEITA', icon: 'leaf-outline', color: '#059669', screen: 'Colheita', cat: 'OPERAÇÃO' },
-        { id: '2', title: 'VENDAS', icon: 'cash-outline', color: '#10B981', screen: 'Vendas', cat: 'OPERAÇÃO' },
-        { id: '3', title: 'ESTOQUE', icon: 'cube-outline', color: '#3B82F6', screen: 'Estoque', cat: 'GESTÃO' },
-        { id: '4', title: 'MONITORAMENTO', icon: 'camera-outline', color: '#EC4899', screen: 'Monitoramento', cat: 'TÉCNICO' },
-        { id: '5', title: 'ADUBAÇÃO', icon: 'flask-outline', color: '#7C3AED', screen: 'AdubacaoList', cat: 'TÉCNICO' },
-        { id: '6', title: 'COMPRAS', icon: 'cart-outline', color: '#F59E0B', screen: 'Compras', cat: 'GESTÃO' },
-        { id: '7', title: 'PLANTIO', icon: 'nutrition-outline', color: '#8B5CF6', screen: 'Plantio', cat: 'OPERAÇÃO' },
-        { id: '8', title: 'FROTA', icon: 'car-sport-outline', color: '#2563EB', screen: 'Frota', cat: 'GESTÃO' },
-        { id: '9', title: 'NOTAS I.A.', icon: 'scan-outline', color: '#14B8A6', screen: 'Ocr', cat: 'FERRAMENTAS' },
-        { id: '10', title: 'RELATÓRIOS', icon: 'pie-chart-outline', color: '#374151', screen: 'Relatorios', cat: 'GESTÃO' },
-        { id: '11', title: 'CADASTROS', icon: 'create-outline', color: '#374151', screen: 'Cadastro', cat: 'SISTEMA' },
-        { id: '12', title: 'CLIENTES', icon: 'people-outline', color: '#374151', screen: 'Clientes', cat: 'SISTEMA' },
-        { id: '13', title: 'ÁREAS', icon: 'map-outline', color: '#374151', screen: 'Culturas', cat: 'SISTEMA' },
-        { id: '14', title: 'SYNC', icon: 'cloud-upload-outline', color: '#6366F1', screen: 'Sync', badge: stats.pendentes, cat: 'SISTEMA' },
-    ];
+    const [menuConfig, setMenuConfig] = useState(null);
+
+    useFocusEffect(useCallback(() => {
+        loadStats();
+        autoSync();
+        // Carregar configuração dinâmica do menu
+        MenuConfigService.getMenuConfig().then(cfg => setMenuConfig(cfg));
+    }, []));
+
+    // Lógica de Colunas Adaptativas
+    // Se a config diz X colunas, mas a tela for pequena, reduzimos.
+    const screenWidth = Dimensions.get('window').width;
+    const getNumColumns = () => {
+        if (!menuConfig) return 3; // Default loading
+        const desired = menuConfig.menu_columns || 3;
+        if (screenWidth < 380 && desired > 2) return 2; // Fallback para telas pequenas
+        return desired;
+    };
+
+    const numColumns = getNumColumns();
+    const cardWidth = (screenWidth - 40 - ((numColumns - 1) * 12)) / numColumns; // 40 (padding) + gaps
 
     const formatBRL = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -75,8 +82,8 @@ export default function HomeScreen({ navigation }) {
                         <Text style={styles.brand}>AgroGB <Text style={styles.brandPro}>SYSTEM</Text></Text>
                         <Text style={styles.salutation}>Painel Gerencial</Text>
                     </View>
-                    <TouchableOpacity onPress={() => navigation.navigate('Profile')} style={styles.profileBtn}>
-                        <Ionicons name="person" size={20} color="#FFF" />
+                    <TouchableOpacity onPress={() => setDrawerVisible(true)} style={styles.profileBtn}>
+                        <Ionicons name="menu" size={24} color="#FFF" />
                     </TouchableOpacity>
                 </View>
 
@@ -123,32 +130,39 @@ export default function HomeScreen({ navigation }) {
                     )}
 
                     <Text style={styles.sectionTitle}>ACESSO RÁPIDO</Text>
-                    <View style={styles.grid}>
-                        {menuItems.map(item => (
-                            <TouchableOpacity
-                                key={item.id}
-                                style={styles.card}
-                                onPress={() => navigation.navigate(item.screen)}
-                                activeOpacity={0.7}
-                            >
-                                <View style={[styles.iconCircle, { backgroundColor: item.color + '15' }]}>
-                                    <Ionicons name={item.icon} size={24} color={item.color} />
-                                </View>
-                                <Text style={styles.cardTitle} numberOfLines={1}>{item.title}</Text>
-                                {item.badge > 0 && (
-                                    <View style={styles.badge}>
-                                        <Text style={styles.badgeText}>{item.badge}</Text>
+                    {menuConfig ? (
+                        <View style={styles.grid}>
+                            {menuConfig.menu_items.filter(i => i.enabled).map((item, index) => (
+                                <TouchableOpacity
+                                    key={item.id}
+                                    style={[styles.card, { width: cardWidth }]}
+                                    onPress={() => navigation.navigate(item.screen)}
+                                    activeOpacity={0.7}
+                                >
+                                    <View style={[styles.iconCircle, { backgroundColor: (item.color || '#374151') + '15' }]}>
+                                        <Ionicons name={item.icon} size={24} color={item.color || '#374151'} />
                                     </View>
-                                )}
-                            </TouchableOpacity>
-                        ))}
-                    </View>
+                                    <Text style={styles.cardTitle} numberOfLines={1}>{item.label}</Text>
+                                    {/* Badges Especiais */}
+                                    {item.id === 'sync' && stats.pendentes > 0 && (
+                                        <View style={styles.badge}>
+                                            <Text style={styles.badgeText}>{stats.pendentes}</Text>
+                                        </View>
+                                    )}
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    ) : (
+                        <View style={{ padding: 20, alignItems: 'center' }}><Text>Carregando menu...</Text></View>
+                    )}
 
                     <View style={styles.footer}>
                         <Text style={styles.version}>AgroGB Mobile v6.0 • Premium</Text>
                     </View>
                 </ScrollView>
             </View>
+
+            <SidebarDrawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />
         </View>
     );
 }
@@ -177,7 +191,7 @@ const styles = StyleSheet.create({
 
     sectionTitle: { fontSize: 12, fontWeight: '900', color: '#6B7280', marginBottom: 15, letterSpacing: 1 },
     grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-    card: { width: (width - 52) / 3, backgroundColor: '#FFF', borderRadius: 16, padding: 15, alignItems: 'center', justifyContent: 'center', elevation: 2, borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)' },
+    card: { backgroundColor: '#FFF', borderRadius: 16, padding: 15, alignItems: 'center', justifyContent: 'center', elevation: 2, borderWidth: 1, borderColor: 'rgba(0,0,0,0.02)' },
     iconCircle: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginBottom: 10 },
     cardTitle: { fontSize: 10, fontWeight: 'bold', color: '#374151', textAlign: 'center' },
 

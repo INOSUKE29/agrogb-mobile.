@@ -12,6 +12,7 @@ import { executeQuery, getCadastro } from '../database/database';
 // Checking previous turns, 'analyzeContent' might be in a file I haven't seen. 
 // I will assume it is in '../services/ai' or similar, but if grep fails, I will add a placeholder.
 import { analyzeContent } from '../services/AIService';
+import { MenuConfigService } from '../services/MenuConfigService';
 
 const THEME = {
     bg: '#F9FAFB',
@@ -22,8 +23,16 @@ const THEME = {
 };
 
 export default function MonitoramentoScreen({ navigation }) {
+    // FEATURE FLAGS (Remote Config)
+    const [features, setFeatures] = useState({
+        novo_registro: true,
+        pesquisa_pdf: true,
+        galeria_fotos: true
+    });
+
     // TABS: REGISTROS | BASE_CONHECIMENTO
     const [activeTab, setActiveTab] = useState('REGISTROS');
+    const [isGalleryMode, setIsGalleryMode] = useState(false); // To toggle Grid/List
 
     // SUB-SCREENS: LIST, NEW, ANALYSIS, DETAIL
     const [screen, setScreen] = useState('LIST');
@@ -49,7 +58,13 @@ export default function MonitoramentoScreen({ navigation }) {
     const [cameraVisible, setCameraVisible] = useState(false);
     const cameraRef = useRef(null);
 
-    useFocusEffect(useCallback(() => { loadData(); loadKnowledgeBase(); }, []));
+    useFocusEffect(useCallback(() => {
+        loadData();
+        loadKnowledgeBase();
+        MenuConfigService.getMonitoramentoFeatures().then(f => {
+            if (f) setFeatures(f);
+        });
+    }, []));
 
     const loadData = async () => {
         setLoading(true);
@@ -157,12 +172,16 @@ export default function MonitoramentoScreen({ navigation }) {
             {/* TAB BAR (Only visible in LIST mode) */}
             {screen === 'LIST' && (
                 <View style={styles.tabBar}>
-                    <TouchableOpacity style={[styles.tabItem, activeTab === 'REGISTROS' && styles.tabItemActive]} onPress={() => setActiveTab('REGISTROS')}>
-                        <Text style={[styles.tabText, activeTab === 'REGISTROS' && styles.tabTextActive]}>DIÁRIO DE CAMPO</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.tabItem, activeTab === 'KB' && styles.tabItemActive]} onPress={() => setActiveTab('KB')}>
-                        <Text style={[styles.tabText, activeTab === 'KB' && styles.tabTextActive]}>BASE DE CONHECIMENTO</Text>
-                    </TouchableOpacity>
+                    {features.novo_registro && (
+                        <TouchableOpacity style={[styles.tabItem, activeTab === 'REGISTROS' && styles.tabItemActive]} onPress={() => setActiveTab('REGISTROS')}>
+                            <Text style={[styles.tabText, activeTab === 'REGISTROS' && styles.tabTextActive]}>DIÁRIO DE CAMPO</Text>
+                        </TouchableOpacity>
+                    )}
+                    {features.pesquisa_pdf && (
+                        <TouchableOpacity style={[styles.tabItem, activeTab === 'KB' && styles.tabItemActive]} onPress={() => setActiveTab('KB')}>
+                            <Text style={[styles.tabText, activeTab === 'KB' && styles.tabTextActive]}>BASE DE CONHECIMENTO</Text>
+                        </TouchableOpacity>
+                    )}
                 </View>
             )}
         </LinearGradient>
@@ -189,7 +208,9 @@ export default function MonitoramentoScreen({ navigation }) {
                 )}
                 ListEmptyComponent={<Text style={styles.empty}>Nenhum registro.</Text>}
             />
-            <TouchableOpacity style={styles.fab} onPress={startNew}><Ionicons name="add" size={30} color="#FFF" /></TouchableOpacity>
+            {features.novo_registro && (
+                <TouchableOpacity style={styles.fab} onPress={startNew}><Ionicons name="add" size={30} color="#FFF" /></TouchableOpacity>
+            )}
         </View>
     );
 
